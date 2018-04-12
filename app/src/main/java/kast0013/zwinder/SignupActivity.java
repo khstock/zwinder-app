@@ -9,6 +9,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,6 +18,9 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import butterknife.ButterKnife;
 import butterknife.BindView;
@@ -23,13 +28,17 @@ import butterknife.BindView;
 public class SignupActivity extends AppCompatActivity {
     private static final String TAG = "SignupActivity";
 
+
+    //Firebase Auths
     private FirebaseAuth firebaseAuth;
+    private FirebaseAuth.AuthStateListener firebaseAuthListener;
 
     @BindView(R.id.input_name) EditText _nameText;
     @BindView(R.id.input_email) EditText _emailText;
     @BindView(R.id.input_password) EditText _passwordText;
     @BindView(R.id.btn_signup) Button _signupButton;
     @BindView(R.id.link_login) TextView _loginLink;
+    @BindView(R.id.radio_gender) RadioGroup _radioGender;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -37,7 +46,17 @@ public class SignupActivity extends AppCompatActivity {
         setContentView(R.layout.activity_signup);
         ButterKnife.bind(this);
 
+        //Firebase Auth und Listener initalisieren
         firebaseAuth = FirebaseAuth.getInstance();
+        firebaseAuthListener = new FirebaseAuth.AuthStateListener() {
+            @Override
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                final FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+                if (user != null){
+                    onSignupSuccess();
+                }
+            }
+        };
 
         _signupButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -71,26 +90,34 @@ public class SignupActivity extends AppCompatActivity {
         progressDialog.setMessage("Creating Account...");
         progressDialog.show();
 
-        String name = _nameText.getText().toString();
+        final String name = _nameText.getText().toString();
         String email = _emailText.getText().toString();
         String password = _passwordText.getText().toString();
+        //Gender Auswahl Male/Female/Other
+        int selectId = _radioGender.getCheckedRadioButtonId();
+        final RadioButton radioButton = findViewById(selectId);
+        if(radioButton.getText() == null) onSignupFailed();
 
         //Meine Firebase Logik
         firebaseAuth.createUserWithEmailAndPassword(email,password)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if(task.isSuccessful()){
-                            Toast.makeText(getBaseContext(), "Firebase Success", Toast.LENGTH_LONG).show();
+                            @Override
+                            public void onComplete(@NonNull Task<AuthResult> task) {
+                                if(task.isSuccessful()){
+                                    progressDialog.dismiss();
+                                    String userId = firebaseAuth.getCurrentUser().getUid();
+                                    DatabaseReference createUserDb = FirebaseDatabase.getInstance().getReference().child("Users").child(radioButton.getText().toString()).child(userId).child("name");
+                                    createUserDb.setValue(name);
 
+                                    //onSignupSuccess();
+                                    //benutze stattdessen firebase auth listener zum feststellen ob auth
+                                }
+                                else{
+                                    onSignupFailed();
+                                }
+
+                            }
                         }
-                        else{
-                            Toast.makeText(getBaseContext(), "Firebase Auth Failed", Toast.LENGTH_LONG).show();
-
-                        }
-
-                    }
-                }
                 );
 
         new android.os.Handler().postDelayed(
@@ -98,9 +125,9 @@ public class SignupActivity extends AppCompatActivity {
                     public void run() {
                         // On complete call either onSignupSuccess or onSignupFailed
                         // depending on success
-                        onSignupSuccess();
+                        // onSignupSuccess();
                         // onSignupFailed();
-                        progressDialog.dismiss();
+
                     }
                 }, 3000);
     }
@@ -108,7 +135,8 @@ public class SignupActivity extends AppCompatActivity {
 
     public void onSignupSuccess() {
         _signupButton.setEnabled(true);
-        setResult(RESULT_OK, null);
+        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        startActivity(intent);
         finish();
     }
 
@@ -147,5 +175,17 @@ public class SignupActivity extends AppCompatActivity {
         }
 
         return valid;
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        firebaseAuth.addAuthStateListener(firebaseAuthListener);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        firebaseAuth.removeAuthStateListener(firebaseAuthListener);
     }
 }
