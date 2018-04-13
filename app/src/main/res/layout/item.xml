@@ -8,8 +8,8 @@
     <TextView
         android:id="@+id/helloText"
         android:textSize="40sp"
-        android:textColor="@android:color/white"
-        android:background="#E339"
+        android:textColor="#CC1D1D"
+        android:background="#ffeee9e2"
         android:gravity="center"
         tools:text="test user"
         android:layout_width="match_parent"
