@@ -16,7 +16,7 @@
             android:layout_width="wrap_content"
             android:layout_height="72dp"
             android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="0dp"
             android:src="@drawable/logo" />
 
         <!--  Name Label -->
@@ -50,6 +50,7 @@
         </android.support.design.widget.TextInputLayout>
 
         <!-- Password Label -->
+
         <android.support.design.widget.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -89,6 +90,38 @@
                 android:layout_marginLeft="20dp"
                 android:text="Other" />
         </RadioGroup>
+
+        <!-- Checkbox Group -->
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Interests" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <CheckBox
+                android:id="@+id/interest_checkbox1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Male" />
+            <CheckBox
+                android:id="@+id/interest_checkbox2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Female" />
+            <CheckBox
+                android:id="@+id/interest_checkbox3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Other" />
+        </LinearLayout>
+
 
         <!-- Signup Button -->
         <android.support.v7.widget.AppCompatButton

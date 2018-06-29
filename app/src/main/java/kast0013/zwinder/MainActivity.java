@@ -2,13 +2,12 @@ package kast0013.zwinder;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.support.v4.widget.SwipeRefreshLayout;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.provider.ContactsContract;
 import android.util.Log;
 import android.view.View;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ListView;
 import android.widget.Toast;
 
 import com.google.firebase.auth.FirebaseAuth;
@@ -17,20 +16,30 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.Query;
+import com.google.firebase.database.ValueEventListener;
 import com.lorentzos.flingswipe.SwipeFlingAdapterView;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class MainActivity extends Activity {
 
-    private ArrayList<String> al;
-    private ArrayAdapter<String> arrayAdapter;
+    private cards karten[];
+    private arrayAdapter arrayAdapter;
     private int i;
+    private String myInterests = "none";
 
     private FirebaseAuth firebaseAuth;
+
+    private String myUID;
+    private DatabaseReference usersDb;
+
+    ListView listView;
+    List<cards> rowItems;
 
     @BindView(R.id.btn_logout) Button _logoutButton;
 
@@ -41,7 +50,28 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        firebaseAuth = FirebaseAuth.getInstance();
+        usersDb = FirebaseDatabase.getInstance().getReference().child("UIDs");
+
+        firebaseAuth = FirebaseAuth.getInstance();          //greift firebase auth instanz
+        myUID = firebaseAuth.getCurrentUser().getUid();     //greift eigene user id
+
+        DatabaseReference interedb = usersDb.child(myUID).child("interests");
+        interedb.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()){
+                    myInterests = dataSnapshot.getValue().toString();
+                    Toast.makeText(MainActivity.this, myInterests, Toast.LENGTH_SHORT).show();
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+        //logout button
         _logoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -52,9 +82,8 @@ public class MainActivity extends Activity {
             }
         });
 
-        al = new ArrayList<>();
-        al.add("Names");
-        arrayAdapter = new ArrayAdapter<>(this, R.layout.item, R.id.helloText, al);
+        rowItems = new ArrayList<cards>();
+        arrayAdapter = new arrayAdapter(this, R.layout.item, rowItems);
 
         SwipeFlingAdapterView flingContainer = findViewById(R.id.frame);
 
@@ -64,21 +93,34 @@ public class MainActivity extends Activity {
             public void removeFirstObjectInAdapter() {
                 // this is the simplest way to delete an object from the Adapter (/AdapterView)
                 Log.d("LIST", "removed object!");
-                al.remove(0);
+                rowItems.remove(0);
                 arrayAdapter.notifyDataSetChanged();
             }
 
             @Override
             public void onLeftCardExit(Object dataObject) {
-                //Do something on the left!
-                //You also have access to the original object.
-                //If you want to use it just cast it (String) dataObject
-                Toast.makeText(MainActivity.this, "left", Toast.LENGTH_SHORT).show();
+                //Beim Swipen der Karte nach links
+                //dataObject in eigenes Objekt casten
+                cards kartenObjekt = (cards) dataObject;    //Um die Aktuelle Swipecard zu
+                String cardUID = kartenObjekt.getUserId();
+                String cardName = kartenObjekt.getName();
+
+                usersDb.child(cardUID).child("Swipes").child(myUID).setValue("dislikes");
+                Toast.makeText(MainActivity.this, "Disliked " + cardName, Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onRightCardExit(Object dataObject) {
-                Toast.makeText(MainActivity.this, "right", Toast.LENGTH_SHORT).show();
+                //Beim Swipen der Karte nach rechts
+                //dataObject in eigenes Objekt casten
+                cards kartenObjekt = (cards) dataObject;    //Um die Aktuelle Swipecard zu
+                String cardUID = kartenObjekt.getUserId();
+                String cardName = kartenObjekt.getName();
+
+                usersDb.child(cardUID).child("Swipes").child(myUID).setValue("likes");
+                checkMatch(cardUID);                                                    //Prüft ob die User sich gegenseitig mögen
+
+                Toast.makeText(MainActivity.this, "liked " + cardName, Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -106,12 +148,44 @@ public class MainActivity extends Activity {
             }
         });
     }
+
+    public void checkMatch(final String swipeUID){          //überpfürft, ob der andere diesen user geswiped und geliked hat
+        DatabaseReference swipeUser = usersDb.child(swipeUID).child("Swipes").child(myUID);     //checkt, ob dieser user vom anderen geliked wurde
+        swipeUser.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                if (dataSnapshot.exists()){                                            //falls dieser User dort geswiped wurde
+                    if (dataSnapshot.getValue().toString().equals("likes")) {           //prüft ob dieser user diesen liked
+                        usersDb.child(myUID).child("Matches").child(swipeUID).setValue("true");     //Setzt das match bei diesem User
+                        usersDb.child(swipeUID).child("Matches").child(myUID).setValue("true");     //Setzt das match bei gematchtem User
+                        Toast.makeText(MainActivity.this, "ITS A MATCH!", Toast.LENGTH_SHORT).show();   //Kündigt es an
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+    }
+
+    //GET USERS * WHERE GENDER = MY USER>INTERESTS && != MY USERS > SWIPES > UID
+
     public void checkUser(){
-        DatabaseReference maleUserDb = FirebaseDatabase.getInstance().getReference().child("Users").child("Male");
-        maleUserDb.addChildEventListener(new ChildEventListener() {
+        //QUERIES!
+        //DatabaseReference maleUserDb = FirebaseDatabase.getInstance().getReference().child("UIDs");
+        //Query potentialUser = usersDb.orderByChild("gender").equalTo("Male");
+        //Query potentialUser = usersDb.child("gender").equalTo("Male");
+        usersDb.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
-                if(dataSnapshot.exists()) al.add(dataSnapshot.child("name").getValue().toString());
+                if(dataSnapshot.exists() && dataSnapshot.child("gender").hasChild(myInterests)){
+                    //!dataSnapshot.child(myUID).child("Swipes").hasChild(dataSnapshot.getKey())
+                    cards item = new cards(dataSnapshot.getKey(), dataSnapshot.child("name").getValue().toString());
+                    rowItems.add(item);
+                    arrayAdapter.notifyDataSetChanged();            //update das arrayAdapter
+                }
             }
 
             @Override
