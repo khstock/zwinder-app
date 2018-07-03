@@ -7,19 +7,38 @@
     tools:context=".MainActivity">
 
     <Button
-            android:id="@+id/btn_logout"
-            android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="24dp"
-            android:padding="12dp"
-            android:text="Logout"/>
+        android:id="@+id/btn_settings"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:padding="12dp"
+        android:text="Settings"
+        app:layout_constraintEnd_toStartOf="@+id/btn_matches"
+        app:layout_constraintStart_toStartOf="@+id/frame"
+        app:layout_constraintTop_toTopOf="@+id/frame" />
+
+    <Button
+        android:id="@+id/btn_matches"
+        android:layout_width="180dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginTop="8dp"
+        android:padding="12dp"
+        android:text="Matches"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/frame" />
 
     <com.lorentzos.flingswipe.SwipeFlingAdapterView
         android:id="@+id/frame"
-        android:background="@color/primary"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/primary"
+        app:max_visible="4"
         app:rotation_degrees="15.5"
         tools:context=".MyActivity" />
 

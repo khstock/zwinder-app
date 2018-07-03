@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -32,6 +34,7 @@ public class MainActivity extends Activity {
     private arrayAdapter arrayAdapter;
     private int i;
     private String myInterests = "none";
+    private List<String> myGender;
 
     private FirebaseAuth firebaseAuth;
 
@@ -41,7 +44,8 @@ public class MainActivity extends Activity {
     ListView listView;
     List<cards> rowItems;
 
-    @BindView(R.id.btn_logout) Button _logoutButton;
+    @BindView(R.id.btn_settings) Button _settingsButton;
+    @BindView(R.id.btn_matches) Button _matchesButton;
 
 
     @Override
@@ -55,11 +59,12 @@ public class MainActivity extends Activity {
         firebaseAuth = FirebaseAuth.getInstance();          //greift firebase auth instanz
         myUID = firebaseAuth.getCurrentUser().getUid();     //greift eigene user id
 
-        DatabaseReference interedb = usersDb.child(myUID).child("interests");
-        interedb.addValueEventListener(new ValueEventListener() {
+        //Meine Interessen lokasl abspeichern (vereinfacht Query)
+        DatabaseReference interesseDb = usersDb.child(myUID).child("interests");
+        interesseDb.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                if (dataSnapshot.exists()){
+                if (dataSnapshot.exists()) {
                     myInterests = dataSnapshot.getValue().toString();
                     Toast.makeText(MainActivity.this, myInterests, Toast.LENGTH_SHORT).show();
                 }
@@ -71,23 +76,52 @@ public class MainActivity extends Activity {
             }
         });
 
-        //logout button
-        _logoutButton.setOnClickListener(new View.OnClickListener() {
+        //Mein Gender Lokal abspeichern (vereinfacht Query)
+        myGender = new ArrayList<String>();
+        DatabaseReference genderDb = usersDb.child(myUID).child("gender");
+        genderDb.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    Log.d("LIST", snapshot.getKey().toString());
+                    myGender.add(snapshot.getKey().toString());
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+            }
+        });
+        //Log.d("LIST", myGender.get(0));
+
+        //Settings Button
+        _settingsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                firebaseAuth.signOut();
-                Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+                Intent intent = new Intent(getApplicationContext(), UserSettingsActivity.class);
                 startActivity(intent);
                 finish();
             }
         });
 
+        //Matches Button
+        _matchesButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), MatchesActivity.class);
+                startActivity(intent);
+                finish();
+            }
+        });
+
+
         rowItems = new ArrayList<cards>();
         arrayAdapter = new arrayAdapter(this, R.layout.item, rowItems);
 
         SwipeFlingAdapterView flingContainer = findViewById(R.id.frame);
-
+        flingContainer.setMinStackInAdapter(1);
         flingContainer.setAdapter(arrayAdapter);
+
         flingContainer.setFlingListener(new SwipeFlingAdapterView.onFlingListener() {
             @Override
             public void removeFirstObjectInAdapter() {
@@ -125,8 +159,6 @@ public class MainActivity extends Activity {
 
             @Override
             public void onAdapterAboutToEmpty(int itemsInAdapter) {
-                // Ask for more data here
-                //al.add("XML ".concat(String.valueOf(i)));
                 checkUser();
                 arrayAdapter.notifyDataSetChanged();
                 Log.d("LIST", "notified");
@@ -138,20 +170,11 @@ public class MainActivity extends Activity {
             }
 
         });
-
-
-        // Optionally add an OnItemClickListener
-        flingContainer.setOnItemClickListener(new SwipeFlingAdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClicked(int itemPosition, Object dataObject) {
-                Toast.makeText(MainActivity.this, "CLICKED!", Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     public void checkMatch(final String swipeUID){          //überpfürft, ob der andere diesen user geswiped und geliked hat
-        DatabaseReference swipeUser = usersDb.child(swipeUID).child("Swipes").child(myUID);     //checkt, ob dieser user vom anderen geliked wurde
-        swipeUser.addValueEventListener(new ValueEventListener() {
+        DatabaseReference whoLikesMe = usersDb.child(myUID).child("Swipes").child(swipeUID);     //checkt, ob dieser user vom anderen geliked wurde
+        whoLikesMe.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
                 if (dataSnapshot.exists()){                                            //falls dieser User dort geswiped wurde
@@ -170,21 +193,21 @@ public class MainActivity extends Activity {
         });
     }
 
-    //GET USERS * WHERE GENDER = MY USER>INTERESTS && != MY USERS > SWIPES > UID
+    //GET USERS * WHERE GENDER = MY USER>INTERESTS && != MY USERS > SWIPES > UIDs
 
-    public void checkUser(){
-        //QUERIES!
-        //DatabaseReference maleUserDb = FirebaseDatabase.getInstance().getReference().child("UIDs");
-        //Query potentialUser = usersDb.orderByChild("gender").equalTo("Male");
-        //Query potentialUser = usersDb.child("gender").equalTo("Male");
-        usersDb.addChildEventListener(new ChildEventListener() {
+    public void checkUser() {
+        Query potentialUser = FirebaseDatabase.getInstance().getReference("UIDs");
+        potentialUser.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot dataSnapshot, String s) {
                 if(dataSnapshot.exists() && dataSnapshot.child("gender").hasChild(myInterests)){
-                    //!dataSnapshot.child(myUID).child("Swipes").hasChild(dataSnapshot.getKey())
-                    cards item = new cards(dataSnapshot.getKey(), dataSnapshot.child("name").getValue().toString());
-                    rowItems.add(item);
-                    arrayAdapter.notifyDataSetChanged();            //update das arrayAdapter
+                    if (myGender.contains(dataSnapshot.child("interests").getValue().toString())){
+                        if(!dataSnapshot.child("Swipes").hasChild(myUID)) {
+                            cards item = new cards(dataSnapshot.getKey(), dataSnapshot.child("name").getValue().toString(), dataSnapshot.child("ProfilePictureUrl").getValue().toString());
+                            rowItems.add(item);
+                            arrayAdapter.notifyDataSetChanged();            //update das arrayAdapter
+                        }
+                    }
                 }
             }
 

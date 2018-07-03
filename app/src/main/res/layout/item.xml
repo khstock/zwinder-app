@@ -30,11 +30,11 @@
                 android:layout_height="250dp"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginTop="15dp"
-                android:id="@+id/image"
+                android:id="@+id/userImage"
                 />
             
             <TextView
-                android:id="@+id/name"
+                android:id="@+id/userName"
                 android:textSize="32sp"
                 android:textColor="#CC1D1D"
                 android:background="#ffeee9e2"
