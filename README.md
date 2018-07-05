@@ -1,5 +1,6 @@
 # zwinder-app
-Building a dating app to improve my understanding of android development.
+Building a dating app to improve my understanding of android development. Also as a project for University of Applied Sciences Kaiserslautern. [A demo Video of the current state of the app can be found here](https://www.youtube.com/watch?v=eBUVMyqWFP0&feature=youtu.be) (1:17min)
+Note: most of the comments are currently in German, sorry about that
 
 ### The dating app currently features:
 1. Creating and logging into your account
@@ -13,12 +14,14 @@ Building a dating app to improve my understanding of android development.
 3. Implement app Notifications
 4. More genders, more user preferences, e.g. Age
 
-## MainActivity: Swipen
+## Demo Gifs: account creation, swiping, profile picture upload 
 
 ![](https://media.giphy.com/media/lcqrxZKdL8Fs76J4FG/giphy.gif)
 ![](https://media.giphy.com/media/fCU1KaEbkz5f5eOfDi/giphy.gif)
 ![](https://media.giphy.com/media/1UPVdhDYK1Bx72AuDG/giphy.gif)
 
+### How to run
+For running the app you need to import this project to Android Studio and include your own **google-services.json** file from [Firebase's developer console](https://console.firebase.google.com/)
 
 ## Credit:
 ### Resources:
