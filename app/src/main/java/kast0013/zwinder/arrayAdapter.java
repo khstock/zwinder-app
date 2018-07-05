@@ -56,16 +56,8 @@ public class arrayAdapter extends ArrayAdapter<cards>{
         }
         ButterKnife.bind(this, convertView);
 
-        //TextView name = (TextView) convertView.findViewById(R.id.name);
-        //ImageView userImage = (ImageView) convertView.findViewById(R.id.image);
-
-        _userName.setText(card_item  .getName());
-        //_userImage.setImageResource(R.mipmap.ic_launcher_round);
-        Glide.with(convertView.getContext()).load(R.mipmap.ic_launcher).into(_userImage);
-        //_userImage.setImageResource();
-        Log.d("IMAGE","SOURCE SET");
-
-        Glide.with(convertView).clear(_userImage);
+        //Setzen von Name und Profilbild
+        _userName.setText(card_item.getName());
         Glide.with(convertView.getContext()).load(card_item.getUserImageUrl()).into(_userImage);
 
         return convertView;

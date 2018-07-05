@@ -181,8 +181,6 @@ public class UserSettingsActivity extends AppCompatActivity {
         }
     }
 
-    //Speichert die URL zum Profilbild in der Firebase Datenbank zum späteren abruf ohne firebase api
-
     //Folgt der Bildauswahl, zum requestCode "1", sofern dies korrekt ist
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

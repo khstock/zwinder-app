@@ -3,9 +3,6 @@ package kast0013.zwinder;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.provider.ContactsContract;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -41,8 +38,7 @@ public class MainActivity extends Activity {
     private String myUID;
     private DatabaseReference usersDb;
 
-    ListView listView;
-    List<cards> rowItems;
+    List<cards> swipeCardArray;
 
     @BindView(R.id.btn_settings) Button _settingsButton;
     @BindView(R.id.btn_matches) Button _matchesButton;
@@ -115,19 +111,22 @@ public class MainActivity extends Activity {
         });
 
 
-        rowItems = new ArrayList<cards>();
-        arrayAdapter = new arrayAdapter(this, R.layout.item, rowItems);
+        //Array Adapter und Swipekarten klasse anlegen
+        swipeCardArray = new ArrayList<cards>();
+        arrayAdapter = new arrayAdapter(this, R.layout.item, swipeCardArray);
 
+        //Swipecards Library, hier wird die Swipecard + Listener angelegt
         SwipeFlingAdapterView flingContainer = findViewById(R.id.frame);
         flingContainer.setMinStackInAdapter(1);
         flingContainer.setAdapter(arrayAdapter);
 
+        //Listener (Swipecard)
         flingContainer.setFlingListener(new SwipeFlingAdapterView.onFlingListener() {
             @Override
             public void removeFirstObjectInAdapter() {
                 // this is the simplest way to delete an object from the Adapter (/AdapterView)
                 Log.d("LIST", "removed object!");
-                rowItems.remove(0);
+                swipeCardArray.remove(0);
                 arrayAdapter.notifyDataSetChanged();
             }
 
@@ -161,8 +160,6 @@ public class MainActivity extends Activity {
             public void onAdapterAboutToEmpty(int itemsInAdapter) {
                 checkUser();
                 arrayAdapter.notifyDataSetChanged();
-                Log.d("LIST", "notified");
-                i++;
             }
 
             @Override
@@ -172,6 +169,7 @@ public class MainActivity extends Activity {
         });
     }
 
+    //Stellt fest, ob sich zwei User gegenseitig geliked haben, falls ja, zeigt es das Match an
     public void checkMatch(final String swipeUID){          //überpfürft, ob der andere diesen user geswiped und geliked hat
         DatabaseReference whoLikesMe = usersDb.child(myUID).child("Swipes").child(swipeUID);     //checkt, ob dieser user vom anderen geliked wurde
         whoLikesMe.addValueEventListener(new ValueEventListener() {
@@ -193,8 +191,7 @@ public class MainActivity extends Activity {
         });
     }
 
-    //GET USERS * WHERE GENDER = MY USER>INTERESTS && != MY USERS > SWIPES > UIDs
-
+    //Die Query, aufwendig erklärt in der Dokumentation
     public void checkUser() {
         Query potentialUser = FirebaseDatabase.getInstance().getReference("UIDs");
         potentialUser.addChildEventListener(new ChildEventListener() {
@@ -204,7 +201,7 @@ public class MainActivity extends Activity {
                     if (myGender.contains(dataSnapshot.child("interests").getValue().toString())){
                         if(!dataSnapshot.child("Swipes").hasChild(myUID)) {
                             cards item = new cards(dataSnapshot.getKey(), dataSnapshot.child("name").getValue().toString(), dataSnapshot.child("ProfilePictureUrl").getValue().toString());
-                            rowItems.add(item);
+                            swipeCardArray.add(item);
                             arrayAdapter.notifyDataSetChanged();            //update das arrayAdapter
                         }
                     }
