@@ -1,6 +1,7 @@
 # zwinder-app
 Building a dating app to improve my understanding of android development. Also as a project for University of Applied Sciences Kaiserslautern. [A demo Video of the current state of the app can be found here](https://www.youtube.com/watch?v=eBUVMyqWFP0&feature=youtu.be) (1:17min)
-Note: most of the comments are currently in German, sorry about that
+[German Documentation can be found here](https://github.com/khstock/zwinder-app/blob/master/Zwinder%20Dokumentation.pdf)
+Note: The documentation and most of the comments are currently in German, sorry about that
 
 ### Demo Gifs: account creation, swiping, profile picture upload 
 ![](https://media.giphy.com/media/lcqrxZKdL8Fs76J4FG/giphy.gif)
